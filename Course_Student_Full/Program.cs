@@ -1,47 +1,60 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//register DB context 
+//register DB context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-//adding controller IgnoreCycles 
+//adding controller IgnoreCycles
 //----------------------------------
 
-builder.Services.AddControllers()
-.AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    options.JsonSerializerOptions.WriteIndented = true;
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System
+            .Text
+            .Json
+            .Serialization
+            .ReferenceHandler
+            .IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AllowFrontend",
+        policy => policy.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader()
+    );
 });
 
 var app = builder.Build();
 
-// SCOPE populate database from json and Auto-Migrate 
-//-----------------------------------------
-using (var scope=app.Services.CreateScope())
-{   
-    //create dbContext    
-    var dbContext=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    //auto migrate 
-    dbContext.Database.Migrate();
-    await SeedDatabase(dbContext);
-}
+// CORS
+app.UseCors("AllowFrontend");
+
+// // SCOPE populate database from json and Auto-Migrate
+// //-----------------------------------------
+// using (var scope = app.Services.CreateScope())
+// {
+//     //create dbContext
+//     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//     //auto migrate
+//     dbContext.Database.Migrate();
+//     await SeedDatabase(dbContext);
+// }
 
 app.MapControllers();
-
 
 app.MapGet("/", () => "Hello World!");
 
 app.Run();
-
-
 
 //static method to populate database
 async Task SeedDatabase(ApplicationDbContext dbContext)
@@ -62,5 +75,3 @@ async Task SeedDatabase(ApplicationDbContext dbContext)
         }
     }
 }
-
-

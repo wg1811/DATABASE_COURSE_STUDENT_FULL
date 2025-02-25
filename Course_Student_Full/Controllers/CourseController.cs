@@ -1,35 +1,32 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-
-//main route name 
+//main route name
 [Route("courses")]
-
-//api controller 
+//api controller
 [ApiController]
-
 //CONTROLLER CLASS
 public class CourseController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+
     public CourseController(ApplicationDbContext context)
     {
         _context = context;
-
-
     }
 
-    //GET ALL COURSES 
+    //GET ALL COURSES
     [HttpGet("getallcourse")]
     public async Task<ActionResult<List<Course>>> GetCourses()
     {
-        var courses = await _context.Courses.ToListAsync();
-        if (courses.Count() == 0) return NotFound(new { Message = "No Course Found " });
+        var courses = await _context.Courses.Include(course => course.Students).ToListAsync();
+        if (courses.Count() == 0)
+            return NotFound(new { Message = "No Course Found " });
         return Ok(courses);
     }
 
-    //ADD NEW COURSE  
+    //ADD NEW COURSE
 
     [HttpPost("addnewcourse")]
     public async Task<ActionResult<Course>> AddCourse([FromBody] Course course)
@@ -38,14 +35,13 @@ public class CourseController : ControllerBase
         if (existedCourse != null)
             return BadRequest(new { Message = "This course already exists" });
 
-        //add 
+        //add
         await _context.Courses.AddAsync(course);
         await _context.SaveChangesAsync();
         return Ok(new { Message = "Course added" });
-
     }
 
-    //DELETE A COURSE 
+    //DELETE A COURSE
 
     [HttpDelete("deletecourse/{id}")]
     public async Task<ActionResult<Course>> DeleteCourse(int id)
@@ -61,7 +57,7 @@ public class CourseController : ControllerBase
         return Ok(new { Message = "Course deleted", Course = existedCourse });
     }
 
-    //UPDATE A COURSE 
+    //UPDATE A COURSE
     [HttpPut("updatecourse/{id}")]
     public async Task<ActionResult<Course>> UpdateCourse(int id, [FromBody] Course updatedCourse)
     {
@@ -76,8 +72,4 @@ public class CourseController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { Message = "Course Updated", Course = existedCourse });
     }
-
-
-
-
 }

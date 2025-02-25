@@ -8,6 +8,7 @@ public class Student
 
     [Required]
     public string Name { get; set; } = "";
+
     [Required]
     public int Age { get; set; } = 0;
 
@@ -17,5 +18,4 @@ public class Student
     //many to many between student-course
 
     public List<Course> Courses { get; set; } = new List<Course>();
-
 }
